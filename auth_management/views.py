@@ -45,10 +45,10 @@ class LoginAPIView(generics.GenericAPIView):
                     status_code = status.HTTP_200_OK
                 else:
                     status_code = status.HTTP_401_UNAUTHORIZED
-                    response = {'message': 'username or password deos not match!'}
+                    response = {'message': 'username or password does not match!'}
             except ObjectDoesNotExist as e:
                 status_code = status.HTTP_401_UNAUTHORIZED
-                response = {'message': 'username or password deos not match!'}
+                response = {'message': 'username or password does not match!'}
         else:
             status_code = status.HTTP_400_BAD_REQUEST
             response = {'message': {'error_keys': serializer.errors.keys(), 'error': serializer.errors}}
