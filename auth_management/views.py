@@ -25,30 +25,33 @@ class LoginAPIView(generics.GenericAPIView):
     def post(self, request):
         data = request.data
         serializer = sr.LoginSerializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data["username"]
-        password = serializer.validated_data["password"]
-        filter_query = Q(mobile=username)
-        filter_query.add(Q(email=username), Q.OR)
-        try:
-            user = User.objects.get(filter_query)
-            is_valid = user.check_password(raw_password=password)
-            if is_valid:
-                access_token = JWTAuth.getAccessToken(user.username, user.password)
-                refresh_token = JWTAuth.getRefreshToken(user.username, user.password)
-                response = {
-                    'access_token': access_token,
-                    'refresh_token': refresh_token,
-                    'name': user.first_name + user.last_name,
-                    'is_superuser': user.is_superuser
-                }
-                status_code = status.HTTP_200_OK
-            else:
+        if serializer.is_valid():
+            username = serializer.validated_data["username"]
+            password = serializer.validated_data["password"]
+            filter_query = Q(mobile=username)
+            filter_query.add(Q(email=username), Q.OR)
+            try:
+                user = User.objects.get(filter_query)
+                is_valid = user.check_password(raw_password=password)
+                if is_valid:
+                    access_token = JWTAuth.getAccessToken(user.username, user.password)
+                    refresh_token = JWTAuth.getRefreshToken(user.username, user.password)
+                    response = {
+                        'access_token': access_token,
+                        'refresh_token': refresh_token,
+                        'name': user.first_name + user.last_name,
+                        'is_superuser': user.is_superuser
+                    }
+                    status_code = status.HTTP_200_OK
+                else:
+                    status_code = status.HTTP_401_UNAUTHORIZED
+                    response = {'message': 'username or password deos not match!'}
+            except ObjectDoesNotExist as e:
                 status_code = status.HTTP_401_UNAUTHORIZED
-                response = {'message': 'User not found with this username or password'}
-        except ObjectDoesNotExist as e:
-            status_code = status.HTTP_401_UNAUTHORIZED
-            response = {'message': 'User not found with this username or password'}
+                response = {'message': 'username or password deos not match!'}
+        else:
+            status_code = status.HTTP_400_BAD_REQUEST
+            response = {'message': {'error_keys': serializer.errors.keys(), 'error': serializer.errors}}
         return Response(response, status=status_code)
 
 
